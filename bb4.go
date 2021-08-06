@@ -98,27 +98,38 @@ func (cipher *Cipher) ikf() {
 // [7, 6, 2, 5, 3, 4, 1, 0] ->
 // In even round: [1, 2, 3, 7, 5, 4, 0, 6]
 // In odd round: [4, 3, 2, 5, 6, 1, 0, 7]
+
+// In even round:
+// [1, 3, 0, 2, 5, 7, 4, 6] +
+// [2, 0, 3, 1, 6, 4, 7, 5] >> (31, 37, 07, 24, 31, 37, 07, 24) xor
+// [3, 0, 1, 2, 7, 4, 5, 6] -> 
+// [1, 2, 3, 7, 5, 4, 0, 6]
+// In odd round: 
+// [0, 1, 3, 2, 4, 5, 7, 6] +
+// [2, 0, 1, 3, 6, 4, 5, 7] >> (59, 22, 08, 46, 59, 22, 08, 46) xor
+// [0, 2, 3, 1, 4, 6, 7, 5] ->
+// [4, 3, 2, 5, 6, 1, 0, 7]
 func (cipher *Cipher) prf() []uint64 {
 	cipher.ikf()
 	for i := 0; i < round; i++ {
 		if i%2 == 0 {
-			cipher.nstate[1] = ((cipher.mstate[6] ^ cipher.mstate[2]) >> 33 | (cipher.mstate[6] ^ cipher.mstate[2]) << 31) + cipher.mstate[7]
-			cipher.nstate[2] = ((cipher.mstate[5] ^ cipher.mstate[4]) >>  5 | (cipher.mstate[5] ^ cipher.mstate[4]) << 59) + cipher.mstate[6]
-			cipher.nstate[3] = ((cipher.mstate[2] ^ cipher.mstate[7]) >> 27 | (cipher.mstate[2] ^ cipher.mstate[7]) << 37) + cipher.mstate[2]
-			cipher.nstate[7] = ((cipher.mstate[4] ^ cipher.mstate[0]) >> 42 | (cipher.mstate[4] ^ cipher.mstate[0]) << 22) + cipher.mstate[5]
-			cipher.nstate[5] = ((cipher.mstate[0] ^ cipher.mstate[5]) >> 57 | (cipher.mstate[0] ^ cipher.mstate[5]) <<  7) + cipher.mstate[3]
-			cipher.nstate[4] = ((cipher.mstate[7] ^ cipher.mstate[1]) >> 56 | (cipher.mstate[7] ^ cipher.mstate[1]) <<  8) + cipher.mstate[4]
-			cipher.nstate[0] = ((cipher.mstate[3] ^ cipher.mstate[6]) >> 41 | (cipher.mstate[3] ^ cipher.mstate[6]) << 23) + cipher.mstate[1]
-			cipher.nstate[6] = ((cipher.mstate[1] ^ cipher.mstate[3]) >> 18 | (cipher.mstate[1] ^ cipher.mstate[3]) << 46) + cipher.mstate[0]
+			cipher.nstate[1] = ((cipher.mstate[1] ^ cipher.mstate[2]) >> 33 | (cipher.mstate[1] ^ cipher.mstate[2]) << 31) + cipher.mstate[3]
+			cipher.nstate[2] = ((cipher.mstate[3] ^ cipher.mstate[0]) >> 27 | (cipher.mstate[3] ^ cipher.mstate[0]) << 37) + cipher.mstate[0]
+			cipher.nstate[3] = ((cipher.mstate[0] ^ cipher.mstate[3]) >> 57 | (cipher.mstate[0] ^ cipher.mstate[3]) <<  7) + cipher.mstate[1]
+			cipher.nstate[7] = ((cipher.mstate[2] ^ cipher.mstate[1]) >> 40 | (cipher.mstate[2] ^ cipher.mstate[1]) << 24) + cipher.mstate[2]
+			cipher.nstate[5] = ((cipher.mstate[5] ^ cipher.mstate[6]) >> 33 | (cipher.mstate[5] ^ cipher.mstate[6]) << 31) + cipher.mstate[7]
+			cipher.nstate[4] = ((cipher.mstate[7] ^ cipher.mstate[4]) >> 27 | (cipher.mstate[7] ^ cipher.mstate[4]) << 37) + cipher.mstate[4]
+			cipher.nstate[0] = ((cipher.mstate[4] ^ cipher.mstate[7]) >> 57 | (cipher.mstate[4] ^ cipher.mstate[7]) << 07) + cipher.mstate[5]
+			cipher.nstate[6] = ((cipher.mstate[6] ^ cipher.mstate[5]) >> 40 | (cipher.mstate[6] ^ cipher.mstate[5]) << 24) + cipher.mstate[6]
 		} else {
-			cipher.nstate[4] = ((cipher.mstate[6] ^ cipher.mstate[2]) >> 33 | (cipher.mstate[6] ^ cipher.mstate[2]) << 31) + cipher.mstate[7]
-			cipher.nstate[3] = ((cipher.mstate[5] ^ cipher.mstate[4]) >>  5 | (cipher.mstate[5] ^ cipher.mstate[4]) << 59) + cipher.mstate[6]
-			cipher.nstate[2] = ((cipher.mstate[2] ^ cipher.mstate[7]) >> 27 | (cipher.mstate[2] ^ cipher.mstate[7]) << 37) + cipher.mstate[2]
-			cipher.nstate[5] = ((cipher.mstate[4] ^ cipher.mstate[0]) >> 42 | (cipher.mstate[4] ^ cipher.mstate[0]) << 22) + cipher.mstate[5]
-			cipher.nstate[6] = ((cipher.mstate[0] ^ cipher.mstate[5]) >> 57 | (cipher.mstate[0] ^ cipher.mstate[5]) <<  7) + cipher.mstate[3]
-			cipher.nstate[1] = ((cipher.mstate[7] ^ cipher.mstate[1]) >> 56 | (cipher.mstate[7] ^ cipher.mstate[1]) <<  8) + cipher.mstate[4]
-			cipher.nstate[0] = ((cipher.mstate[3] ^ cipher.mstate[6]) >> 41 | (cipher.mstate[3] ^ cipher.mstate[6]) << 23) + cipher.mstate[1]
-			cipher.nstate[7] = ((cipher.mstate[1] ^ cipher.mstate[3]) >> 18 | (cipher.mstate[1] ^ cipher.mstate[3]) << 46) + cipher.mstate[0]
+			cipher.nstate[4] = ((cipher.mstate[0] ^ cipher.mstate[2]) >>  5 | (cipher.mstate[0] ^ cipher.mstate[2]) << 59) + cipher.mstate[0]
+			cipher.nstate[3] = ((cipher.mstate[1] ^ cipher.mstate[0]) >> 42 | (cipher.mstate[1] ^ cipher.mstate[0]) << 22) + cipher.mstate[2]
+			cipher.nstate[2] = ((cipher.mstate[3] ^ cipher.mstate[1]) >> 56 | (cipher.mstate[3] ^ cipher.mstate[1]) <<  8) + cipher.mstate[3]
+			cipher.nstate[5] = ((cipher.mstate[2] ^ cipher.mstate[3]) >> 18 | (cipher.mstate[2] ^ cipher.mstate[3]) << 46) + cipher.mstate[1]
+			cipher.nstate[6] = ((cipher.mstate[4] ^ cipher.mstate[6]) >>  5 | (cipher.mstate[4] ^ cipher.mstate[6]) << 59) + cipher.mstate[4]
+			cipher.nstate[1] = ((cipher.mstate[5] ^ cipher.mstate[4]) >> 42 | (cipher.mstate[5] ^ cipher.mstate[4]) << 22) + cipher.mstate[6]
+			cipher.nstate[0] = ((cipher.mstate[7] ^ cipher.mstate[5]) >> 56 | (cipher.mstate[7] ^ cipher.mstate[5]) <<  8) + cipher.mstate[7]
+			cipher.nstate[7] = ((cipher.mstate[6] ^ cipher.mstate[7]) >> 18 | (cipher.mstate[6] ^ cipher.mstate[7]) << 46) + cipher.mstate[5]
 		}
 		copy(cipher.mstate[:], cipher.nstate[:])
 	}
